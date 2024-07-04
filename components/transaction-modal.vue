@@ -1,6 +1,5 @@
 <template>
     <UModal v-model="isTransactionModalOpen">
-        {{ isTransactionModalOpen }}
         <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
             <template #header>
                 Add Transactions
@@ -68,19 +67,16 @@
 
     type Schema = z.output<typeof schema>;
 
-    const props = defineProps({
-        modalValue: Boolean
-    });
+    const isTransactionModalOpen = defineModel<boolean>();
+    const emit = defineEmits(['saved']);
 
-    const emit = defineEmits(['update:modalValue']);
-
-    const isTransactionModalOpen = computed({
-        get: () => props.modalValue,
-        set: (value) => {
-           if(!value) resetForm();           
-            emit('update:modalValue', value);
-        }
-    });
+    // const isTransactionModalOpen = computed({
+    //     get: () => modelValue.value,
+    //     set: (value) => {
+    //        if(!value) resetForm();           
+    //         modelValue.value =  value;
+    //     }
+    // });
 
     const initialTransactionState = ref({
         type: undefined,
@@ -99,25 +95,23 @@
         if(form.value.errors.length) return; 
 
         isLoading.value = true;
-        try {
-            isTransactionModalOpen.value = false;
-            console.log(isTransactionModalOpen.value)
-            // emit('saved');
-                
+        try {               
 
-            // const {error} = await supabase.from('transactions').upsert({ ...transactionState.value as any });
+            const {error} = await supabase.from('transactions').upsert({ ...transactionState.value as any });            
 
-            // if(!error){
-            //     toast.add({
-            //         title: 'Transaction saved',
-            //         icon: 'i-heroicons-check-rounded',
-            //         color: 'green',
-            //     });
+            if(!error){
+                emit('saved');
+                toast.add({
+                    title: 'Transaction saved',
+                    icon: 'i-heroicons-check-rounded',
+                    color: 'green',
+                });               
                 
-            //     emit('saved');
-            //     isTransactionModalOpen.value = !isTransactionModalOpen.value;
-            // }
-            
+                resetForm();           
+                isTransactionModalOpen.value =  false;
+                return;
+            }
+            throw error;
         } catch (error) {
             toast.add({
                 title: 'Transaction failed',
